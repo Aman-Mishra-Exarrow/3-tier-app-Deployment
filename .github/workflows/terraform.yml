@@ -31,18 +31,18 @@ jobs:
           aws-region: ap-south-1
 
       - name: Terraform Init
-        working-directory: terraform
+        working-directory: terra-config
         run: terraform init
 
       - name: Terraform Validate
-        working-directory: terraform
+        working-directory: terra-config
         run: terraform validate
 
       - name: Terraform Plan
-        working-directory: terraform
+        working-directory: terra-config
         run: terraform plan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        working-directory: terraform
+        working-directory: terra-config
         run: terraform apply -auto-approve
