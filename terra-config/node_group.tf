@@ -4,7 +4,15 @@ resource "aws_eks_node_group" "example" {
 
   node_role_arn = "arn:aws:iam::642825399412:role/eks-node-group-example"
   subnet_ids     = data.aws_subnets.public.ids
-
+  lifecycle {
+    ignore_changes = [
+      version,
+      release_version,
+      launch_template,
+      scaling_config,
+      update_config
+    ]
+  }
   launch_template {
     name    = "Three-tier-cloud-node-template"
     version = "$Latest"
