@@ -2,25 +2,19 @@ resource "aws_eks_node_group" "example" {
   cluster_name    = aws_eks_cluster.eks_cluster.name
   node_group_name = "EKS_NODE_GROUP"
 
-  node_role_arn = "arn:aws:iam::642825399412:role/eks-node-group-example"
-  subnet_ids     = data.aws_subnets.public.ids
-  lifecycle {
-    ignore_changes = [
-      version,
-      release_version,
-      launch_template,
-      scaling_config,
-      update_config
-    ]
-  }
-  launch_template {
-    name    = "Three-tier-cloud-node-template"
-    version = "$Latest"
-  }
+  node_role_arn = data.aws_iam_role.eks_node_role.arn
+  subnet_ids     = data.aws_subnets.default.ids
+
+  instance_types = ["c7i-flex.large"]
+  ami_type       = "AL2_x86_64"
 
   scaling_config {
     desired_size = 1
     max_size     = 1
     min_size     = 1
   }
+
+  depends_on = [
+    aws_eks_cluster.eks_cluster
+  ]
 }

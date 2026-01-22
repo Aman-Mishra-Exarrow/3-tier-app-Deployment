@@ -1,22 +1,10 @@
 resource "aws_eks_cluster" "eks_cluster" {
   name     = "Three-tier-cloud"
-  role_arn = "arn:aws:iam::642825399412:role/eks-role-cluster"
+  role_arn = data.aws_iam_role.eks_cluster_role.arn
 
   vpc_config {
-    subnet_ids = data.aws_subnets.public.ids
-  }
-
-  bootstrap_self_managed_addons = false
-
-  lifecycle {
-    ignore_changes = [
-      access_config,
-      kubernetes_network_config,
-      upgrade_policy,
-      enabled_cluster_log_types,
-      tags,
-      vpc_config[0].security_group_ids,
-      vpc_config[0].public_access_cidrs,
-    ]
+    subnet_ids              = data.aws_subnets.default.ids
+    endpoint_public_access  = true
+    endpoint_private_access = false
   }
 }
