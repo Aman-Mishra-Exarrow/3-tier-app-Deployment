@@ -1,0 +1,44 @@
+name: Deploy Kubernetes Manifests to EKS
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - k8s_manifests/**
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::642825399412:role/AWSRoleForGithubAction
+          aws-region: us-east-1
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.0
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region us-east-1 \
+            --name Three-tier-cloud
+
+      - name: Verify cluster access
+        run: kubectl get nodes
+
+      - name: Deploy Kubernetes manifests
+        run: |
+          kubectl apply -f k8s-manifests/
