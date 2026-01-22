@@ -8,6 +8,10 @@ resource "aws_eks_node_group" "example" {
   instance_types = ["t3.small"]
   ami_type       = "AL2023_x86_64_STANDARD"
 
+  update_config {
+    max_unavailable = 1
+  }
+
   scaling_config {
     desired_size = 2
     max_size     = 2
