@@ -1,3 +1,16 @@
+resource "aws_security_group_rule" "cluster_allow_nodes" {
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+
+  security_group_id        = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
+  source_security_group_id = aws_security_group.eks_nodes.id
+
+   description = "Allow worker nodes to communicate with EKS control plane"
+}
+
+
 resource "aws_security_group" "eks_nodes" {
   name        = "eks-nodes-sg"
   description = "EKS worker nodes SG"
