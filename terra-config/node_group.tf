@@ -5,12 +5,12 @@ resource "aws_eks_node_group" "example" {
   node_role_arn = data.aws_iam_role.eks_node_role.arn
   subnet_ids     = data.aws_subnets.public.ids
 
-  instance_types = ["c7i-flex.large"]
+  instance_types = ["t3.small"]
   ami_type       = "AL2023_x86_64_STANDARD"
 
   scaling_config {
-    desired_size = 1
-    max_size     = 1
+    desired_size = 2
+    max_size     = 2
     min_size     = 1
   }
 
