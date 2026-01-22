@@ -53,7 +53,7 @@ jobs:
 
       # ---------- KUBECTL ----------
       - name: Setup kubectl
-        uses: aws/setup-kubectl@v4
+        uses: azure/setup-kubectl@v4
         with:
           version: v1.29.0
 
