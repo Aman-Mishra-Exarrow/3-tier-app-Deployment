@@ -3,7 +3,7 @@ resource "aws_eks_node_group" "example" {
   node_group_name = "EKS_NODE_GROUP"
 
   node_role_arn = data.aws_iam_role.eks_node_role.arn
-  subnet_ids     = data.aws_subnets.default.ids
+  subnet_ids     = data.aws_subnets.public.ids
 
   instance_types = ["c7i-flex.large"]
   ami_type       = "AL2_x86_64"
