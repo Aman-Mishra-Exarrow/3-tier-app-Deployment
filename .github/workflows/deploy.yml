@@ -81,4 +81,4 @@ jobs:
           sed -i "s|__FRONTEND_IMAGE__|$FRONTEND_IMAGE|g" k8s_manifests/frontend-deployment.yaml
           sed -i "s|__BACKEND_IMAGE__|$BACKEND_IMAGE|g" k8s_manifests/backend-deployment.yaml
 
-          kubectl apply -f k8s_manifests/
+          kubectl apply -R -f k8s_manifests/
