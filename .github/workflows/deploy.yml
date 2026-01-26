@@ -31,6 +31,9 @@ jobs:
           role-to-assume: arn:aws:iam::642825399412:role/AWSRoleForGithubAction
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
       # ---------- ECR LOGIN ----------
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -62,6 +65,15 @@ jobs:
           aws eks update-kubeconfig \
             --region $AWS_REGION \
             --name $CLUSTER_NAME
+
+      - name: Verify EKS access
+        run: |
+          kubectl get ns
+          kubectl auth can-i get nodes
+
+      - name: Ensure namespace exists
+        run: |
+          kubectl get ns workshop || kubectl create ns workshop
 
       # ---------- DEPLOY ----------
       - name: Deploy to EKS
