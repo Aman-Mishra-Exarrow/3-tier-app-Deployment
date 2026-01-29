@@ -1,12 +1,7 @@
 name: Build & Deploy Frontend + Backend to EKS
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - frontend/**
-      - backend/**
-      - k8s_manifests/**
+   workflow_dispatch:
 
 permissions:
   id-token: write
@@ -14,7 +9,7 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
-  ACCOUNT_ID: 642825399412
+  ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   CLUSTER_NAME: Three-tier-cloud
   FRONTEND_ECR: three-tier-frontend
   BACKEND_ECR: three-tier-backend
@@ -31,7 +26,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::642825399412:role/AWSRoleForGithubAction
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/AWSRoleForGithubAction
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Verify AWS identity
