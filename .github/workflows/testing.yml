@@ -1,0 +1,111 @@
+name: Node scaling test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    if: vars.INFRA_ALREADY_CREATED != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/AWSRoleForGithubActions
+          aws-region: us-east-1
+
+      - name: Terraform Init
+        working-directory: terra-config
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: terra-config
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: terra-config
+        run: terraform plan
+
+      - name: Terraform Apply
+        working-directory: terra-config
+        run: terraform apply -auto-approve
+
+  scale-nodegroup:
+    if: vars.INFRA_ALREADY_CREATED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/AWSRoleForGithubActions
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Validate scaling values
+        run: |
+          MIN=${{ vars.NODEGROUP_MIN_SIZE }}
+          MAX=${{ vars.NODEGROUP_MAX_SIZE }}
+          DESIRED=${{ vars.NODEGROUP_DESIRED_SIZE }}
+
+          echo "Min=$MIN | Max=$MAX | Desired=$DESIRED"
+
+          if [ "$MIN" -gt "$MAX" ]; then
+            echo "ERROR: MIN ($MIN) cannot be greater than MAX ($MAX)"
+            exit 1
+          fi
+
+      - name: Terraform Init
+        working-directory: terra-config
+        run: terraform init
+
+      - name: Terraform Plan (scaling only)
+        working-directory: terra-config
+        run: |
+          terraform plan \
+            -var="min_size=${{ vars.NODEGROUP_MIN_SIZE }}" \
+            -var="max_size=${{ vars.NODEGROUP_MAX_SIZE }}" \
+            -var="desired_size=${{ vars.NODEGROUP_DESIRED_SIZE }}"
+
+      - name: Terraform Apply (scaling only)
+        working-directory: terra-config
+        run: |
+          terraform apply -auto-approve \
+            -var="min_size=${{ vars.NODEGROUP_MIN_SIZE }}" \
+            -var="max_size=${{ vars.NODEGROUP_MAX_SIZE }}" \
+            -var="desired_size=${{ vars.NODEGROUP_DESIRED_SIZE }}"
+```
+
+---
+
+### How it works
+
+| `INFRA_ALREADY_CREATED` | `terraform` job | `scale-nodegroup` job |
+|---|---|---|
+| `false` or not set | ✅ runs | ❌ skipped |
+| `true` | ❌ skipped | ✅ runs |
+
+### GitHub Variables needed
+```
+INFRA_ALREADY_CREATED  = true / false
+NODEGROUP_MIN_SIZE     = 1
+NODEGROUP_MAX_SIZE     = 2
+NODEGROUP_DESIRED_SIZE = 2
