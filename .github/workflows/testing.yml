@@ -46,19 +46,19 @@ jobs:
     if: vars.INFRA_ALREADY_CREATED == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/AWSRoleForGithubActions
           aws-region: us-east-1
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.6.6
+      - name: Install eksctl
+        run: |
+          curl --silent --location \
+            "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz" \
+            | tar xz -C /tmp
+          sudo mv /tmp/eksctl /usr/local/bin
+          eksctl version
 
       - name: Validate scaling values
         run: |
@@ -73,36 +73,12 @@ jobs:
             exit 1
           fi
 
-      - name: Terraform Init
-        working-directory: terra-config
-        run: terraform init
-
-      - name: Terraform Plan (scaling only)
-        working-directory: terra-config
+      - name: Scale nodegroup via eksctl
         run: |
-          terraform plan \
-            -var="min_size=${{ vars.NODEGROUP_MIN_SIZE }}" \
-            -var="max_size=${{ vars.NODEGROUP_MAX_SIZE }}" \
-            -var="desired_size=${{ vars.NODEGROUP_DESIRED_SIZE }}"
-
-      - name: Terraform Apply (scaling only)
-        working-directory: terra-config
-        run: |
-          terraform apply -auto-approve \
-            -var="min_size=${{ vars.NODEGROUP_MIN_SIZE }}" \
-            -var="max_size=${{ vars.NODEGROUP_MAX_SIZE }}" \
-            -var="desired_size=${{ vars.NODEGROUP_DESIRED_SIZE }}"
-            
-### How it works
-
-# | `INFRA_ALREADY_CREATED` | `terraform` job | `scale-nodegroup` job |
-# |---|---|---|
-# | `false` or not set | ✅ runs | ❌ skipped |
-# | `true` | ❌ skipped | ✅ runs |
-
-# ### GitHub Variables needed
-# ```
-# INFRA_ALREADY_CREATED  = true / false
-# NODEGROUP_MIN_SIZE     = 1
-# NODEGROUP_MAX_SIZE     = 2
-# NODEGROUP_DESIRED_SIZE = 2
+          eksctl scale nodegroup \
+            --cluster=${{ vars.CLUSTER_NAME }} \
+            --name=${{ vars.NODEGROUP_NAME }} \
+            --nodes-min=${{ vars.NODEGROUP_MIN_SIZE }} \
+            --nodes-max=${{ vars.NODEGROUP_MAX_SIZE }} \
+            --nodes=${{ vars.NODEGROUP_DESIRED_SIZE }} \
+            --region=us-east-1
