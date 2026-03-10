@@ -92,20 +92,17 @@ jobs:
             -var="min_size=${{ vars.NODEGROUP_MIN_SIZE }}" \
             -var="max_size=${{ vars.NODEGROUP_MAX_SIZE }}" \
             -var="desired_size=${{ vars.NODEGROUP_DESIRED_SIZE }}"
-```
-
----
-
+            
 ### How it works
 
-| `INFRA_ALREADY_CREATED` | `terraform` job | `scale-nodegroup` job |
-|---|---|---|
-| `false` or not set | ✅ runs | ❌ skipped |
-| `true` | ❌ skipped | ✅ runs |
+# | `INFRA_ALREADY_CREATED` | `terraform` job | `scale-nodegroup` job |
+# |---|---|---|
+# | `false` or not set | ✅ runs | ❌ skipped |
+# | `true` | ❌ skipped | ✅ runs |
 
-### GitHub Variables needed
-```
-INFRA_ALREADY_CREATED  = true / false
-NODEGROUP_MIN_SIZE     = 1
-NODEGROUP_MAX_SIZE     = 2
-NODEGROUP_DESIRED_SIZE = 2
+# ### GitHub Variables needed
+# ```
+# INFRA_ALREADY_CREATED  = true / false
+# NODEGROUP_MIN_SIZE     = 1
+# NODEGROUP_MAX_SIZE     = 2
+# NODEGROUP_DESIRED_SIZE = 2
