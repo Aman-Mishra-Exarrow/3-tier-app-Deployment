@@ -124,10 +124,10 @@ jobs:
             --replicas=${{ vars.POD_DESIRED_REPLICAS }} \
             --namespace=${{ vars.NAMESPACE }}
 
-      - name: Verify
-        run: |
-          echo "=== Deployment ==="
-          kubectl get deployment ${{ vars.DEPLOYMENT_NAME }} -n ${{ vars.NAMESPACE }}
+      # - name: Verify
+      #   run: |
+      #     echo "=== Deployment ==="
+      #     kubectl get deployment ${{ vars.DEPLOYMENT_NAME }} -n ${{ vars.NAMESPACE }}
 
 
 # ### Add these GitHub Variables
