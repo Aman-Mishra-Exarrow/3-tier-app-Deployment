@@ -120,7 +120,7 @@ jobs:
 
       - name: Scale pod replicas
         run: |
-          kubectl scale deployment ${{ vars.DEPLOYMENT_NAME }} \
+          kubectl scale deployment --all  \
             --replicas=${{ vars.POD_DESIRED_REPLICAS }} \
             --namespace=${{ vars.NAMESPACE }}
 
