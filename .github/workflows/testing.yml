@@ -1,4 +1,4 @@
-name: Node scaling test
+name: Node & pod scaling test
 
 on:
   workflow_dispatch:
@@ -8,42 +8,8 @@ permissions:
   contents: read
 
 jobs:
-  terraform:
-    if: vars.INFRA_ALREADY_CREATED != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.6.6
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/AWSRoleForGithubActions
-          aws-region: us-east-1
-
-      - name: Terraform Init
-        working-directory: terra-config
-        run: terraform init
-
-      - name: Terraform Validate
-        working-directory: terra-config
-        run: terraform validate
-
-      - name: Terraform Plan
-        working-directory: terra-config
-        run: terraform plan
-
-      - name: Terraform Apply
-        working-directory: terra-config
-        run: terraform apply -auto-approve
-
   scale-nodegroup:
-    if: vars.INFRA_ALREADY_CREATED == 'true'
+    if: vars.SCALE_INFRA == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Configure AWS credentials (OIDC)
@@ -60,19 +26,6 @@ jobs:
           sudo mv /tmp/eksctl /usr/local/bin
           eksctl version
 
-      - name: Validate scaling values
-        run: |
-          MIN=${{ vars.NODEGROUP_MIN_SIZE }}
-          MAX=${{ vars.NODEGROUP_MAX_SIZE }}
-          DESIRED=${{ vars.NODEGROUP_DESIRED_SIZE }}
-
-          echo "Min=$MIN | Max=$MAX | Desired=$DESIRED"
-
-          if [ "$MIN" -gt "$MAX" ]; then
-            echo "ERROR: MIN ($MIN) cannot be greater than MAX ($MAX)"
-            exit 1
-          fi
-
       - name: Scale nodegroup via eksctl
         run: |
           eksctl scale nodegroup \
@@ -84,7 +37,7 @@ jobs:
             --region=us-east-1
 
   scale-pods:
-    if: vars.INFRA_ALREADY_CREATED == 'true'
+    if: vars.SCALE_INFRA == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Configure AWS credentials (OIDC)
@@ -105,19 +58,6 @@ jobs:
             --name ${{ vars.CLUSTER_NAME }} \
             --region us-east-1
 
-      - name: Validate replica values
-        run: |
-          REPLICAS=${{ vars.POD_DESIRED_REPLICAS }}
-          MIN=${{ vars.POD_MIN_REPLICAS }}
-          MAX=${{ vars.POD_MAX_REPLICAS }}
-
-          echo "Min=$MIN | Max=$MAX | Desired=$REPLICAS"
-
-          if [ "$REPLICAS" -lt "$MIN" ] || [ "$REPLICAS" -gt "$MAX" ]; then
-            echo "ERROR: DESIRED ($REPLICAS) must be between MIN ($MIN) and MAX ($MAX)"
-            exit 1
-          fi
-
       - name: Scale pod replicas
         run: |
           kubectl scale deployment --all  \
@@ -128,22 +68,3 @@ jobs:
         run: |
           echo "=== Deployment ==="
           kubectl get deployment ${{ vars.DEPLOYMENT_NAME }} -n ${{ vars.NAMESPACE }}
-
-
-# ### Add these GitHub Variables
-# ```
-# POD_DESIRED_REPLICAS  = 2
-# POD_MIN_REPLICAS      = 1
-# POD_MAX_REPLICAS      = 2
-# DEPLOYMENT_NAME       = my-app
-# HPA_NAME              = my-app-hpa
-# NAMESPACE             = staging
-# ```
-
-# ---
-
-# ### Full picture of all 3 jobs now
-# ```
-# INFRA_ALREADY_CREATED = false  →  terraform job runs        (creates infra)
-# INFRA_ALREADY_CREATED = true   →  scale-nodegroup job runs  (scales nodes)
-#                                    scale-pods job runs       (scales pods)
