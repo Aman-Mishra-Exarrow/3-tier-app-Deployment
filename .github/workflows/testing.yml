@@ -64,7 +64,33 @@ jobs:
             --replicas=${{ vars.POD_DESIRED_REPLICAS }} \
             --namespace=${{ vars.NAMESPACE }}
 
+<<<<<<< HEAD
       - name: Verify
         run: |
           echo "=== Deployment ==="
           kubectl get deployment ${{ vars.DEPLOYMENT_NAME }} -n ${{ vars.NAMESPACE }}
+=======
+      # - name: Verify
+      #   run: |
+      #     echo "=== Deployment ==="
+      #     kubectl get deployment ${{ vars.DEPLOYMENT_NAME }} -n ${{ vars.NAMESPACE }}
+
+
+# ### Add these GitHub Variables
+# ```
+# POD_DESIRED_REPLICAS  = 2
+# POD_MIN_REPLICAS      = 1
+# POD_MAX_REPLICAS      = 2
+# DEPLOYMENT_NAME       = my-app
+# HPA_NAME              = my-app-hpa
+# NAMESPACE             = staging
+# ```
+
+# ---
+
+# ### Full picture of all 3 jobs now
+# ```
+# INFRA_ALREADY_CREATED = false  →  terraform job runs        (creates infra)
+# INFRA_ALREADY_CREATED = true   →  scale-nodegroup job runs  (scales nodes)
+#                                    scale-pods job runs       (scales pods)
+>>>>>>> 0c9ea244007ae9ee32fae7d8581fcc248f4f1404
